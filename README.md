@@ -1,1 +1,1 @@
-# educa
+A project for learning django
