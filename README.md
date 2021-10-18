@@ -1,1 +1,1 @@
-A project for learning django
+Курсовой проект
