@@ -1,0 +1,10 @@
+<div class="test" id="{{ item.id }}" style="overflow: hidden">
+    <form action="{% url 'check_test' module.id item.id %}" method="GET">
+        <ul style="list-style-type: none">
+            {% for choice in item.testitem_set.all %}
+                <li><label for="choice_{{ choice.id }}">{{ choice.item_title }}</label><input type="checkbox" name="choice_{{ choice.id }}"></li>
+            {% endfor %}
+        </ul>
+        <input type="submit" value="Check">
+    </form>
+</div>

@@ -2,7 +2,6 @@ from django.urls import path
 
 from courses import views
 
-
 urlpatterns = [
     path('mine/',
          views.ManageCourseListView.as_view(),
@@ -19,6 +18,12 @@ urlpatterns = [
     path('<pk>/module/',
          views.CourseModuleUpdateView.as_view(),
          name='course_module_update'),
+    path('module/<int:module_id>/content/test/create/',
+         views.TestCreateUpdateView.as_view(),
+         name='module_content_test_create'),
+    path('module/<int:module_id>/content/test/<id>/',
+         views.TestCreateUpdateView.as_view(),
+         name='module_content_test_update'),
     path('module/<int:module_id>/content/<model_name>/create/',
          views.ContentCreateUpdateView.as_view(),
          name='module_content_create'),
@@ -37,4 +42,22 @@ urlpatterns = [
     path('content/order/',
          views.ContentOrderView.as_view(),
          name='content_order'),
+    path('subject/<slug:subject>/',
+         views.CourseListView.as_view(),
+         name='course_list_subject'),
+    path('<slug:slug>/',
+         views.CourseDetailView.as_view(),
+         name='course_detail'),
+    path('module/<int:module_id>/test/<int:test_id>/check/',
+         views.CheckTestView.as_view(),
+         name='check_test'),
+    path('module/<int:module_id>/process_finished/',
+         views.ProcessModuleFinishedView.as_view(),
+         name='process_module_finished'),
+    path('check_test_was_done/<int:test_id>/',
+         views.CheckTestWasDoneView.as_view(),
+         name='check_test_was_done'),
+    path('module/<int:module_id>/check_finished/',
+         views.CheckModuleFinishedView.as_view(),
+         name='check_module_finished'),
 ]

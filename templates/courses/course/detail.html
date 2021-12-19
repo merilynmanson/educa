@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}
+  {{ object.title }}
+{% endblock %}
+{% block content %}
+  {% with subject=object.subject %}
+    <h1>
+      {{ object.title }}
+    </h1>
+    <div class="module">
+      <h2>Overview</h2>
+      <p>
+        <a href="{% url "course_list_subject" subject.slug %}">
+        {{ subject.title }}</a>.
+        {{ object.modules.count }} modules.
+        Instructor: {{ object.owner.get_full_name }}
+      </p>
+      {{ object.overview|linebreaks }}
+        {% if request.user.is_authenticated %}
+            {% if is_enrolled == True %}
+                <a href="{% url 'student_course_detail' object.id %}">Continue learning</a>
+            {% else %}
+                  <form action="{% url "student_enroll_course" %}" method="post">
+                    {{ enroll_form }}
+                    {% csrf_token %}
+                    <input type="submit" value="Enroll now">
+                  </form>
+            {% endif %}
+        {% else %}
+          <a href="{% url "student_registration" %}" class="button">
+            Register to enroll
+          </a>
+        {% endif %}
+    </div>
+
+      <div id="reviews_block" style="display: flex; flex-direction: column">
+            <h3 style="margin: 10px;"><b>Reviews:</b></h3>
+            {% if review_form %}
+                  <div style="padding: 10px; margin: 10px;">
+                    Add review:
+                      <form action="{% url 'create_review' object.id%}" method="POST">
+                          {% csrf_token %}
+                          {{ review_form.as_p }}
+                          <input type="submit" value="Add">
+                      </form>
+                  </div>
+            {% else %}
+                {% if my_review %}
+                    <div class="review" style="border-left: solid black 2px; padding: 10px; margin: 10px">
+                      <h3>User <b>{{ my_review.user.username }}</b> {% if my_review.like %}liked{% else %}disliked{% endif %} the course.</h3>
+                    <p>{{ my_review.text }}</p>
+                    <p>Date: {{ my_review.date }}</p>
+                        <form action="{% url 'delete_review' my_review.id %}" method="GET">
+                            <input type="submit" value="Delete">
+                        </form>
+                    </div>
+                {% else %}
+                    <p>In order to leave a review, you have to pass 30% of the course at least.</p>
+                {% endif %}
+            {% endif %}
+          {% for review in reviews %}
+              <div class="review" style="border-left: solid black 2px; padding: 10px; margin: 10px">
+                  <h3>User <b>{{ review.user.username }}</b> {% if review.like %}liked{% else %}disliked{% endif %} the course.</h3>
+                <p>{{ review.text }}</p>
+                <p>Date: {{ review.date }}</p>
+              </div>
+          {% empty %}
+              <p>Other users haven't left any reviews yet.</p>
+          {% endfor %}
+      </div>
+
+
+  {% endwith %}
+
+{% endblock %}

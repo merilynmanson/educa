@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+{% block title %}
+  {{ object.title }}
+{% endblock %}
+{% block content %}
+  <h1>
+    {{ module.title }}
+  </h1>
+  <div class="contents">
+    <h3>Modules ({{ progress }}% done)</h3>
+    <ul id="modules">
+      {% for m in object.modules.all %}
+        <li data-id="{{ m.id }}" class="module_list_item" {% if m == module %} class="selected"{% endif %}>
+          <a href="{% url "student_course_detail_module" object.id m.id %}">
+            <span>
+              Module <span class="order">{{ m.order|add:1 }}</span>
+            </span>
+            <br>
+            {{ m.title }}
+          </a>
+        </li>
+      {% empty %}
+        <li>No modules yet.</li>
+      {% endfor %}
+    </ul>
+  </div>
+  <div class="module">
+    {% for content in module.contents.all %}
+      {% with item=content.item %}
+              <h2>{{ item.title }}</h2>
+              {{ item.render }}
+
+      {% endwith %}
+    {% endfor %}
+  </div>
+
+        <script>
+        let tests = document.getElementsByClassName("test");
+
+        let current_url = window.location.href
+        const request_check_module = new XMLHttpRequest();
+        let module_id = "";
+        if (current_url.split("/")[6] === ""){
+             module_id = "1";
+        } else {
+             module_id =  current_url.split("/")[6];
+        }
+
+        const module_check_url = "http://127.0.0.1:8000/course/module/" + module_id + "/process_finished/";
+        request_check_module.open('GET', module_check_url);
+        request_check_module.setRequestHeader('Content-Type', 'text/html');
+
+        request_check_module.addEventListener("readystatechange", () => {
+            if (request_check_module.readyState === 4 && request_check_module.status === 200) {
+                console.log("Request was sent.");
+            }
+        });
+        request_check_module.send();
+        for(let i=0; i < tests.length; i++) {
+            // Создаём объект класса XMLHttpRequest
+            const request = new XMLHttpRequest();
+
+            const url = "http://127.0.0.1:8000/course/check_test_was_done/" + tests[i].id;
+
+            /* Здесь мы указываем параметры соединения с сервером, т.е. мы указываем метод соединения GET,
+            а после запятой мы указываем путь к файлу на сервере который будет обрабатывать наш запрос. */
+            request.open('GET', url);
+
+            // Указываем заголовки для сервера, говорим что тип данных, - контент который мы хотим получить должен быть не закодирован.
+            request.setRequestHeader('Content-Type', 'application/json');
+
+            // Здесь мы получаем ответ от сервера на запрос, лучше сказать ждем ответ от сервера
+            request.addEventListener("readystatechange", () => {
+
+                /*   request.readyState - возвращает текущее состояние объекта XHR(XMLHttpRequest) объекта,
+             бывает 4 состояния 4-е состояние запроса - операция полностью завершена, пришел ответ от сервера,
+             вот то что нам нужно request.status это статус ответа,
+             нам нужен код 200 это нормальный ответ сервера, 401 файл не найден, 500 сервер дал ошибку и прочее...   */
+                if (request.readyState === 4 && request.status === 200) {
+                    let resp = JSON.parse(request.response);
+                    if (resp["status"] !== "not_done") {
+                        let inputs = tests[i].getElementsByTagName("input");
+                        for (let j=0; j < Object.keys(resp["answers"]).length; j++) {
+                            let key = Object.keys(resp["answers"])[j].toString();
+                            let check_box = document.getElementsByName(key)[0];
+
+                            if (resp["answers"][key] === true) {
+                                check_box.checked = true;
+                            }
+                        }
+
+                        if (resp["status"] === "wrong") {
+                            tests[i].style.backgroundColor = "#ffa8a8";
+                        } else if (resp["status"] === "right") {
+                            tests[i].style.backgroundColor = "#8affad";
+                            tests[i].style.opacity = 0.5;
+                            for (let j = 0; j < inputs.length; j++) {
+                                inputs[j].disabled = true;
+                            }
+                        }
+                    }
+
+                }
+            });
+
+            // Выполняем запрос
+            request.send();
+        }
+
+        let modules = document.getElementsByClassName("module_list_item");
+        for (let i=0; i < modules.length; i++) {
+            const check_module = new XMLHttpRequest();
+            const check_url = "http://127.0.0.1:8000/course/module/" + modules[i].getAttribute("data-id").toString() + "/check_finished/";
+            check_module.open('GET', check_url);
+            check_module.setRequestHeader('Content-Type', 'application/json');
+
+            check_module.addEventListener("readystatechange", () => {
+                if (check_module.readyState === 4 && check_module.status === 200) {
+                    let resp = JSON.parse(check_module.responseText);
+
+                    if (resp["response"] === true) {
+                        modules[i].style.backgroundColor = "#3fad37";
+                    }
+                }
+            });
+            check_module.send();
+        }
+    </script>
+{% endblock %}
