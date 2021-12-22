@@ -32,7 +32,13 @@
 
       {% endwith %}
     {% endfor %}
+
+  <p>Discussion:</p>
+    <div id="comments">
+    </div>
   </div>
+
+
 
         <script>
         let tests = document.getElementsByClassName("test");
@@ -125,5 +131,54 @@
             });
             check_module.send();
         }
+
+        // Gains and parses comments tree
+            const gain_comments_request = new XMLHttpRequest();
+            const gain_comments_url = "http://127.0.0.1:8000/communicate/course/module/" + module_id.toString() + "/get_comments/";
+            gain_comments_request.open('GET', gain_comments_url);
+            gain_comments_request.setRequestHeader('Content-Type', 'application/json');
+
+            gain_comments_request.addEventListener("readystatechange", () => {
+                if (gain_comments_request.readyState === 4 && gain_comments_request.status === 200) {
+                    let comments_json = JSON.parse(gain_comments_request.responseText);
+                    console.log(comments_json);
+                    let threads_keys = Object.keys(comments_json);
+                    for (let i=0; i < threads_keys.length; i++) {
+                        parse_comments_json(threads_keys[i].toString(), comments_json[threads_keys[i].toString()], 0)
+                    }
+
+                }
+            });
+            gain_comments_request.send();
+
+
+            function parse_comments_json(comment_title, comment, offset) {
+                let comments_div = document.getElementById("comments");
+                let div = document.createElement("div");
+                div.className = "comment";
+                div.style.border = "solid 1px";
+                div.style.display = "flex";
+                div.style.flexDirection = "column";
+                div.style.margin = "15px " + "15px " + "15px " + (50 * offset).toString() + "px";
+                div.style.padding = "15px";
+                let p_title = document.createElement("p");
+                p_title.innerText = comment_title.toString();
+                let p_text = document.createElement("p");
+                p_text.innerText = comment["content"]["text"];
+                let p_date = document.createElement("p");
+                p_date.innerText = "Here will be the date";
+                div.appendChild(p_title);
+                div.appendChild(p_text);
+                div.appendChild(p_date);
+                comments_div.appendChild(div);
+
+                if (comment["replies"] !== null) {
+                    let replies_titles = Object.keys(comment["replies"]);
+                    for (let i=0; i < replies_titles.length; i++) {
+                        parse_comments_json(replies_titles[i].toString(), comment["replies"][replies_titles[i].toString()], offset+1)
+                    }
+                }
+
+            }
     </script>
 {% endblock %}

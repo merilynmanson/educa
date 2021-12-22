@@ -29,10 +29,18 @@ h1 {
     margin:0;
 }
 
+#comments {
+    display: flex;
+    flex-direction: column;
+    padding: 15px;
+    margin: 15px;
+}
+
 .module {
     padding:10px 20px;
-    float:left;
-    width:600px;
+    display: flex;
+    flex-direction: column;
+    width: 900px;
 }
 
 .module h3 {
@@ -78,7 +86,8 @@ h1 {
 .contents {
     width:20%;
     padding:10px;
-    float:left;
+    display: flex;
+    flex-direction: column;
     background:#333;
     color: #fff;
     font-family:'Roboto', sans-serif;
