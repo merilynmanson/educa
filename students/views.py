@@ -2,9 +2,11 @@ from django.contrib.auth import authenticate, login
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.contenttypes.models import ContentType
-from django.urls import reverse_lazy
+from django.http import HttpResponseRedirect
+from django.urls import reverse_lazy, reverse
 from django.views.generic import CreateView, FormView, ListView, DetailView
 
+from communicate.forms import CommentForm
 from courses.models import Course, FinishedModule, Module, Test, Content
 from students.forms import CourseEnrollForm
 
@@ -71,9 +73,15 @@ class StudentCourseDetailView(DetailView):
         finished_count = FinishedModule.objects.filter(user=request.user, module__course=self.get_object()).count()
         all_modules_count = Module.objects.filter(course=self.object).count()
 
+        if 'module_id' not in kwargs:
+            return HttpResponseRedirect(reverse_lazy('student_course_detail_module',
+                                                     args=[context['module'].course.id, context['module'].id]))
+
         if all_modules_count == 0:
             context['progress'] = 100
         else:
-            context['progress'] = int(finished_count/all_modules_count * 100)
+            context['progress'] = int(finished_count / all_modules_count * 100)
+
+        context['new_comment_form'] = CommentForm()
 
         return self.render_to_response(context=context)

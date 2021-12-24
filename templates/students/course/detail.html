@@ -34,6 +34,11 @@
     {% endfor %}
 
   <p>Discussion:</p>
+      <form action="{% url 'add_comment' module.id %}" method="POST">
+          {% csrf_token %}
+          {{ new_comment_form.as_p }}
+          <input type="submit" value="Leave comment">
+      </form>
     <div id="comments">
     </div>
   </div>
@@ -68,20 +73,9 @@
 
             const url = "http://127.0.0.1:8000/course/check_test_was_done/" + tests[i].id;
 
-            /* Здесь мы указываем параметры соединения с сервером, т.е. мы указываем метод соединения GET,
-            а после запятой мы указываем путь к файлу на сервере который будет обрабатывать наш запрос. */
             request.open('GET', url);
-
-            // Указываем заголовки для сервера, говорим что тип данных, - контент который мы хотим получить должен быть не закодирован.
             request.setRequestHeader('Content-Type', 'application/json');
-
-            // Здесь мы получаем ответ от сервера на запрос, лучше сказать ждем ответ от сервера
             request.addEventListener("readystatechange", () => {
-
-                /*   request.readyState - возвращает текущее состояние объекта XHR(XMLHttpRequest) объекта,
-             бывает 4 состояния 4-е состояние запроса - операция полностью завершена, пришел ответ от сервера,
-             вот то что нам нужно request.status это статус ответа,
-             нам нужен код 200 это нормальный ответ сервера, 401 файл не найден, 500 сервер дал ошибку и прочее...   */
                 if (request.readyState === 4 && request.status === 200) {
                     let resp = JSON.parse(request.response);
                     if (resp["status"] !== "not_done") {
@@ -108,8 +102,6 @@
 
                 }
             });
-
-            // Выполняем запрос
             request.send();
         }
 
@@ -144,7 +136,7 @@
                     console.log(comments_json);
                     let threads_keys = Object.keys(comments_json);
                     for (let i=0; i < threads_keys.length; i++) {
-                        parse_comments_json(threads_keys[i].toString(), comments_json[threads_keys[i].toString()], 0)
+                        parse_comments_json(comments_json[threads_keys[i].toString()], 0)
                     }
 
                 }
@@ -152,7 +144,7 @@
             gain_comments_request.send();
 
 
-            function parse_comments_json(comment_title, comment, offset) {
+            function parse_comments_json(comment, offset) {
                 let comments_div = document.getElementById("comments");
                 let div = document.createElement("div");
                 div.className = "comment";
@@ -161,21 +153,135 @@
                 div.style.flexDirection = "column";
                 div.style.margin = "15px " + "15px " + "15px " + (50 * offset).toString() + "px";
                 div.style.padding = "15px";
+
                 let p_title = document.createElement("p");
-                p_title.innerText = comment_title.toString();
+                p_title.innerText = comment["content"]["username"].toString() +
+                    " (" + comment["content"]["date"].toString() + ")";
+
                 let p_text = document.createElement("p");
                 p_text.innerText = comment["content"]["text"];
-                let p_date = document.createElement("p");
-                p_date.innerText = "Here will be the date";
+
+                let btn_like = document.createElement("button");
+                btn_like.innerText = "+ (" + comment["content"]["likes"].toString() + ")";
+                btn_like.style.width = "50px";
+                btn_like.style.height = "20px";
+                if (comment["content"]["my_vote"] === true) {
+                    btn_like.style.fontWeight = "bold";
+                }
+                btn_like.addEventListener("click", function () {
+                    const change_vote_request = new XMLHttpRequest();
+                    let change_vote_url = "";
+                    //change_vote_request.open('GET', change_vote_url);
+
+                    change_vote_request.addEventListener("readystatechange", () => {
+                        if (change_vote_request.readyState === 4 && change_vote_request.status === 200) {
+                            console.log("REQUEST WAS SENT!");
+                        }
+                    });
+                    if (comment["content"]["my_vote"] === null) {
+                        console.log("ANY PROBLEMS?");
+                        change_vote_request.open("GET", "http://127.0.0.1:8000/communicate/comment/" + comment["content"]["id"] + "/add_comment_vote/like/");
+                        change_vote_request.setRequestHeader('Content-Type', 'text/html');
+                        change_vote_request.send();
+                    } else if (comment["content"]["my_vote"] === true) {
+                        change_vote_request.open("GET", "http://127.0.0.1:8000/communicate/comment/" + comment["content"]["id"] + "/delete_comment_vote/");
+                        change_vote_request.setRequestHeader('Content-Type', 'text/html');
+                        change_vote_request.send();
+                    } else if (comment["content"]["my_vote"] === false) {
+                        // Delete dislike request and add like request
+                        console.log('Was dislike but here is like now');
+                        change_vote_request.open("GET", "http://127.0.0.1:8000/communicate/comment/" + comment["content"]["id"] + "/change_comment_vote/");
+                        change_vote_request.setRequestHeader('Content-Type', 'text/html');
+                        change_vote_request.send();
+                    }
+
+
+                });
+
+
+                let btn_dislike = document.createElement("button");
+                btn_dislike.innerText = "- (" + comment["content"]["dislikes"].toString() + ")";
+                btn_dislike.style.width = "50px";
+                btn_dislike.style.height = "20px";
+                if (comment["content"]["my_vote"] === false) {
+                    btn_dislike.style.fontWeight = "bold";
+                }
+                btn_dislike.addEventListener("click", function () {
+                    const change_vote_request = new XMLHttpRequest();
+                    let change_vote_url = "";
+                    //change_vote_request.open('GET', change_vote_url);
+
+                    change_vote_request.addEventListener("readystatechange", () => {
+                        if (change_vote_request.readyState === 4 && change_vote_request.status === 200) {
+                            console.log("REQUEST WAS SENT!");
+                        }
+                    });
+                    if (comment["content"]["my_vote"] === null) {
+                        console.log("ANY PROBLEMS?");
+                        change_vote_request.open("GET", "http://127.0.0.1:8000/communicate/comment/" + comment["content"]["id"] + "/add_comment_vote/dislike/");
+                        change_vote_request.setRequestHeader('Content-Type', 'text/html');
+                        change_vote_request.send();
+                    } else if (comment["content"]["my_vote"] === false) {
+                        change_vote_request.open("GET", "http://127.0.0.1:8000/communicate/comment/" + comment["content"]["id"] + "/delete_comment_vote/");
+                        change_vote_request.setRequestHeader('Content-Type', 'text/html');
+                        change_vote_request.send();
+                    } else if (comment["content"]["my_vote"] === true) {
+                        // Delete dislike request and add like request
+                        console.log('Was dislike but here is like now');
+                        change_vote_request.open("GET", "http://127.0.0.1:8000/communicate/comment/" + comment["content"]["id"] + "/change_comment_vote/");
+                        change_vote_request.setRequestHeader('Content-Type', 'text/html');
+                        change_vote_request.send();
+                    }
+
+
+                });
+
+                let btn_reply = document.createElement("a");
+                btn_reply.innerText = "Reply";
+                btn_reply.addEventListener("click", function () {
+                    let reply_form = document.getElementById("reply_form");
+                    if (reply_form !== null) {
+                        comments_div.removeChild(reply_form);
+                    } else {
+                        let new_reply_div = document.createElement("div");
+
+                        new_reply_div.innerHTML = '<form id="reply_form" action="{% url 'add_comment' module_id%}" method="POST">' +
+                            '<input type="hidden" name="replies_to" value="'+ comment["content"]["id"].toString() +'"/>' +
+                            '<textarea name="text" form="reply_form"></textarea>' +
+                            '{% csrf_token %}' + '<input type="submit" value="Reply"/>' + "</form>";
+                        div.insertAdjacentHTML("afterend", new_reply_div.innerHTML);
+                    }
+                });
+
+
                 div.appendChild(p_title);
                 div.appendChild(p_text);
-                div.appendChild(p_date);
+                div.appendChild(btn_like);
+                div.appendChild(btn_dislike);
+                div.appendChild(btn_reply);
+
+                let user_id = {{ user.id }};
+                if (comment["content"]["user_id"] === user_id) {
+                    let btn_edit = document.createElement("a");
+                    btn_edit.innerText = "Edit";
+                    btn_edit.addEventListener("click", function () {
+                        let edit_form = document.createElement("div");
+                        edit_form.innerHTML = '<form id="reply_form" action="http://127.0.0.1:8000/communicate/comment/'+
+                            comment["content"]["id"] +'/edit_comment/" method="POST">' +
+                                '<input type="hidden" name="id" value="'+ comment["content"]["id"].toString() +'"/>' +
+                                '<textarea name="text" form="reply_form">' + comment['content']['text'] + '</textarea>' +
+                                '{% csrf_token %}' + '<input type="submit" value="Save"/>' + "</form>";
+                        p_text.insertAdjacentHTML("beforebegin", edit_form.innerHTML);
+                        div.removeChild(p_text);
+                    });
+                    div.appendChild(btn_edit);
+                }
                 comments_div.appendChild(div);
 
                 if (comment["replies"] !== null) {
                     let replies_titles = Object.keys(comment["replies"]);
                     for (let i=0; i < replies_titles.length; i++) {
-                        parse_comments_json(replies_titles[i].toString(), comment["replies"][replies_titles[i].toString()], offset+1)
+                        parse_comments_json(comment["replies"][replies_titles[i].toString()], offset+1)
                     }
                 }
 

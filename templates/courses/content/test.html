@@ -2,7 +2,7 @@
     <form action="{% url 'check_test' module.id item.id %}" method="GET">
         <ul style="list-style-type: none">
             {% for choice in item.testitem_set.all %}
-                <li><label for="choice_{{ choice.id }}">{{ choice.item_title }}</label><input type="checkbox" name="choice_{{ choice.id }}"></li>
+                <li style="display: flex; flex-direction: row"><input type="checkbox" name="choice_{{ choice.id }}"><label for="choice_{{ choice.id }}">{{ choice.item_title }}</label></li>
             {% endfor %}
         </ul>
         <input type="submit" value="Check">

@@ -18,7 +18,7 @@ class CourseReview(models.Model):
 class Comment(models.Model):
     module = models.ForeignKey(Module, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    date = models.DateField(auto_now_add=True)
+    date = models.DateField(auto_now=True)
     text = models.TextField()
     replies_to = models.ForeignKey('self', on_delete=models.CASCADE, null=True, related_name='replies')
 
